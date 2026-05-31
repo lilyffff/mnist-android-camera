@@ -10,6 +10,8 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.example.mnistcamera.databinding.ActivityMainBinding
 import java.util.Locale
 import java.util.concurrent.ExecutorService
@@ -41,6 +43,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Model load failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
         cameraExecutor = Executors.newSingleThreadExecutor()
+        applyBottomInsetPadding()
 
         binding.captureButton.setOnClickListener {
             captureAndClassify()
@@ -117,6 +120,24 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun applyBottomInsetPadding() {
+        val panel = binding.bottomPanel
+        val baseBottomPadding = panel.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(panel) { view, insets ->
+            val systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop,
+                view.paddingRight,
+                baseBottomPadding + systemBottom
+            )
+            insets
+        }
+
+        ViewCompat.requestApplyInsets(panel)
     }
 
     override fun onDestroy() {
