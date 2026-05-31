@@ -101,8 +101,10 @@ class MainActivity : AppCompatActivity() {
 
         cameraExecutor.execute {
             try {
+                val box = ImageUtils.detectDigitBoundingBox(frame)
                 val result = localClassifier.classify(frame)
                 runOnUiThread {
+                    binding.bboxOverlay.setBoxFromBitmap(box, frame.width, frame.height)
                     binding.resultText.text = "Prediction: ${result.digit}"
                     binding.confidenceText.text = String.format(
                         Locale.US,
@@ -126,10 +128,12 @@ class MainActivity : AppCompatActivity() {
         try {
             classifier?.close()
             classifier = DigitClassifier(this)
+            binding.bboxOverlay.clearBox()
             binding.resultText.text = getString(R.string.result_default)
             binding.confidenceText.text = getString(R.string.confidence_default)
         } catch (e: Exception) {
             classifier = null
+            binding.bboxOverlay.clearBox()
             binding.resultText.text = "Prediction: model init failed"
             binding.confidenceText.text = e.message ?: e.javaClass.simpleName
             Toast.makeText(this, "Model load failed: ${e.message}", Toast.LENGTH_LONG).show()

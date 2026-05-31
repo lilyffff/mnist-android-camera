@@ -1,6 +1,7 @@
 package com.example.mnistcamera
 
 import android.graphics.Bitmap
+import android.graphics.RectF
 
 object ImageUtils {
 
@@ -18,7 +19,8 @@ object ImageUtils {
         val maxValue = invertedGray.maxOrNull() ?: 0f
         val threshold = maxOf(0.20f, maxValue * 0.35f)
 
-        val digitBox = findBoundingBox(invertedGray, width, height, threshold)
+        val digitBox = findBoundingBoxOrNull(invertedGray, width, height, threshold)
+            ?: Box(0f, 0f, width.toFloat(), height.toFloat())
         val squareBox = makePaddedSquareBox(digitBox, width, height)
 
         val canvas = FloatArray(TARGET_SIZE * TARGET_SIZE)
@@ -37,6 +39,25 @@ object ImageUtils {
         }
 
         return canvas
+    }
+
+    fun detectDigitBoundingBox(bitmap: Bitmap): RectF? {
+        val cropSize = minOf(bitmap.width, bitmap.height)
+        val cropX = (bitmap.width - cropSize) / 2
+        val cropY = (bitmap.height - cropSize) / 2
+        val cropped = Bitmap.createBitmap(bitmap, cropX, cropY, cropSize, cropSize)
+
+        val invertedGray = toInvertedGray(cropped)
+        val maxValue = invertedGray.maxOrNull() ?: 0f
+        val threshold = maxOf(0.20f, maxValue * 0.35f)
+        val box = findBoundingBoxOrNull(invertedGray, cropSize, cropSize, threshold) ?: return null
+
+        return RectF(
+            cropX + box.left,
+            cropY + box.top,
+            cropX + box.left + box.width,
+            cropY + box.top + box.height
+        )
     }
 
     private data class Box(val left: Float, val top: Float, val width: Float, val height: Float)
@@ -59,7 +80,7 @@ object ImageUtils {
         return output
     }
 
-    private fun findBoundingBox(data: FloatArray, width: Int, height: Int, threshold: Float): Box {
+    private fun findBoundingBoxOrNull(data: FloatArray, width: Int, height: Int, threshold: Float): Box? {
         var minX = width
         var minY = height
         var maxX = -1
@@ -76,9 +97,7 @@ object ImageUtils {
             }
         }
 
-        if (maxX < minX || maxY < minY) {
-            return Box(0f, 0f, width.toFloat(), height.toFloat())
-        }
+        if (maxX < minX || maxY < minY) return null
 
         return Box(
             minX.toFloat(),
