@@ -37,11 +37,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        try {
-            classifier = DigitClassifier(this)
-        } catch (e: Exception) {
-            Toast.makeText(this, "Model load failed: ${e.message}", Toast.LENGTH_LONG).show()
-        }
+        initializeClassifier()
         cameraExecutor = Executors.newSingleThreadExecutor()
         applyBottomInsetPadding()
 
@@ -83,6 +79,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun captureAndClassify() {
+        if (classifier == null) {
+            initializeClassifier()
+        }
+
         val localClassifier = classifier
         if (localClassifier == null) {
             runOnUiThread {
@@ -119,6 +119,20 @@ class MainActivity : AppCompatActivity() {
                     ).show()
                 }
             }
+        }
+    }
+
+    private fun initializeClassifier() {
+        try {
+            classifier?.close()
+            classifier = DigitClassifier(this)
+            binding.resultText.text = getString(R.string.result_default)
+            binding.confidenceText.text = getString(R.string.confidence_default)
+        } catch (e: Exception) {
+            classifier = null
+            binding.resultText.text = "Prediction: model init failed"
+            binding.confidenceText.text = e.message ?: e.javaClass.simpleName
+            Toast.makeText(this, "Model load failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
