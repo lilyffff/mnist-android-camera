@@ -112,6 +112,15 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor.execute {
             try {
                 val roi = cropToGuide(frame, guideRect)
+                val inkRatio = ImageUtils.estimateInkRatioInGuideRoi(roi)
+                if (inkRatio < 0.02f) {
+                    runOnUiThread {
+                        binding.resultText.text = "Prediction: no digit detected"
+                        binding.confidenceText.text = "Confidence: 0.0%"
+                    }
+                    return@execute
+                }
+
                 val preprocessed = ImageUtils.preprocessGuideRoiTo28(roi)
                 val result = localClassifier.classifyInput(preprocessed)
                 runOnUiThread {

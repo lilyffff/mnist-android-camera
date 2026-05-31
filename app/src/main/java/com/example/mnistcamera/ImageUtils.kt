@@ -20,6 +20,15 @@ object ImageUtils {
         return output
     }
 
+    fun estimateInkRatioInGuideRoi(bitmap: Bitmap): Float {
+        val resized = Bitmap.createScaledBitmap(bitmap, TARGET_SIZE, TARGET_SIZE, true)
+        val gray = toInvertedGray(resized)
+        val maxValue = gray.maxOrNull() ?: 0f
+        val threshold = maxOf(0.20f, maxValue * 0.35f)
+        val inkPixels = gray.count { it >= threshold }
+        return inkPixels.toFloat() / gray.size.toFloat()
+    }
+
     fun preprocess(bitmap: Bitmap): FloatArray {
         val cropped = centerCrop(bitmap)
         val width = cropped.width
