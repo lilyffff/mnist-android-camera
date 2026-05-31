@@ -28,11 +28,11 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Build release APK
-        run: gradle :app:assembleRelease
+      - name: Build installable debug APK
+        run: gradle :app:assembleDebug
 
       - name: Create GitHub release and upload APK
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/app-release-unsigned.apk
+          files: app/build/outputs/apk/debug/app-debug.apk
           generate_release_notes: true

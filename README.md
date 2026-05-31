@@ -47,8 +47,8 @@ TensorFlow Lite model (`mnist_nn_model.tflite`)을 사용해 안드로이드 폰
 	- `main` 브랜치 push 또는 PR 시 디버그 APK를 빌드
 	- 결과물(`app-debug.apk`)을 Actions Artifact로 업로드
 - `.github/workflows/android-release.yml`
-	- `v*` 태그 push 시 릴리스 APK를 빌드
-	- GitHub Release를 자동 생성하고 APK 첨부
+	- `v*` 태그 push 시 설치 가능한 debug APK를 빌드
+	- GitHub Release를 자동 생성하고 `app-debug.apk` 첨부
 
 릴리스 배포 예시:
 
@@ -56,6 +56,13 @@ TensorFlow Lite model (`mnist_nn_model.tflite`)을 사용해 안드로이드 폰
 - `git push origin v1.0.0`
 
 위 명령 실행 후 GitHub의 Actions/Release 탭에서 결과를 확인할 수 있습니다.
+
+## 안드로이드 폰 설치 방법
+
+1. GitHub Releases에서 `app-debug.apk`를 다운로드합니다.
+2. 폰 설정에서 브라우저(또는 파일 앱)의 "알 수 없는 앱 설치 허용"을 켭니다.
+3. 다운로드한 APK를 실행해 설치합니다.
+4. 처음 실행 시 카메라 권한을 허용합니다.
 
 ## 정확도 개선 팁
 
