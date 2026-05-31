@@ -10,6 +10,16 @@ object ImageUtils {
     private const val MNIST_MEAN = 0.1307f
     private const val MNIST_STD = 0.3081f
 
+    fun preprocessGuideRoiTo28(bitmap: Bitmap): FloatArray {
+        val resized = Bitmap.createScaledBitmap(bitmap, TARGET_SIZE, TARGET_SIZE, true)
+        val gray = toInvertedGray(resized)
+        val output = FloatArray(TARGET_SIZE * TARGET_SIZE)
+        for (i in gray.indices) {
+            output[i] = (gray[i] - MNIST_MEAN) / MNIST_STD
+        }
+        return output
+    }
+
     fun preprocess(bitmap: Bitmap): FloatArray {
         val cropped = centerCrop(bitmap)
         val width = cropped.width

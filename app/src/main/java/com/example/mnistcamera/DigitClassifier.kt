@@ -20,6 +20,10 @@ class DigitClassifier(context: Context) {
 
     fun classify(bitmap: Bitmap): ClassificationResult {
         val inputData = ImageUtils.preprocess(bitmap)
+        return classifyInput(inputData)
+    }
+
+    fun classifyInput(inputData: FloatArray): ClassificationResult {
         val input = arrayOf(inputData)
         val output = Array(1) { FloatArray(10) }
 

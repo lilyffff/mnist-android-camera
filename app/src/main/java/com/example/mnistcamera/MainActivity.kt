@@ -2,6 +2,8 @@ package com.example.mnistcamera
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.RectF
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -99,12 +101,20 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        val guideRect = binding.bboxOverlay.getGuideRect()
+        if (guideRect == null) {
+            runOnUiThread {
+                Toast.makeText(this, "Guide box is not ready yet.", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
         cameraExecutor.execute {
             try {
-                val box = ImageUtils.detectDigitBoundingBox(frame)
-                val result = localClassifier.classify(frame)
+                val roi = cropToGuide(frame, guideRect)
+                val preprocessed = ImageUtils.preprocessGuideRoiTo28(roi)
+                val result = localClassifier.classifyInput(preprocessed)
                 runOnUiThread {
-                    binding.bboxOverlay.setBoxFromBitmap(box, frame.width, frame.height)
                     binding.resultText.text = "Prediction: ${result.digit}"
                     binding.confidenceText.text = String.format(
                         Locale.US,
@@ -128,16 +138,31 @@ class MainActivity : AppCompatActivity() {
         try {
             classifier?.close()
             classifier = DigitClassifier(this)
-            binding.bboxOverlay.clearBox()
             binding.resultText.text = getString(R.string.result_default)
             binding.confidenceText.text = getString(R.string.confidence_default)
         } catch (e: Exception) {
             classifier = null
-            binding.bboxOverlay.clearBox()
             binding.resultText.text = "Prediction: model init failed"
             binding.confidenceText.text = e.message ?: e.javaClass.simpleName
             Toast.makeText(this, "Model load failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun cropToGuide(frame: Bitmap, guideRectInView: RectF): Bitmap {
+        val overlayWidth = binding.bboxOverlay.width.coerceAtLeast(1)
+        val overlayHeight = binding.bboxOverlay.height.coerceAtLeast(1)
+
+        val sx = frame.width.toFloat() / overlayWidth.toFloat()
+        val sy = frame.height.toFloat() / overlayHeight.toFloat()
+
+        val left = (guideRectInView.left * sx).toInt().coerceIn(0, frame.width - 1)
+        val top = (guideRectInView.top * sy).toInt().coerceIn(0, frame.height - 1)
+        val right = (guideRectInView.right * sx).toInt().coerceIn(left + 1, frame.width)
+        val bottom = (guideRectInView.bottom * sy).toInt().coerceIn(top + 1, frame.height)
+
+        val width = (right - left).coerceAtLeast(1)
+        val height = (bottom - top).coerceAtLeast(1)
+        return Bitmap.createBitmap(frame, left, top, width, height)
     }
 
     private fun applyBottomInsetPadding() {
