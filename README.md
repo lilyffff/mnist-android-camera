@@ -39,6 +39,24 @@ TensorFlow Lite model (`mnist_nn_model.tflite`)을 사용해 안드로이드 폰
 - `git remote add origin https://github.com/<your-id>/<repo-name>.git`
 - `git push -u origin main`
 
+## GitHub Actions workflow 배포
+
+이 저장소에는 아래 2개의 자동화 workflow가 포함되어 있습니다.
+
+- `.github/workflows/android-ci.yml`
+	- `main` 브랜치 push 또는 PR 시 디버그 APK를 빌드
+	- 결과물(`app-debug.apk`)을 Actions Artifact로 업로드
+- `.github/workflows/android-release.yml`
+	- `v*` 태그 push 시 릴리스 APK를 빌드
+	- GitHub Release를 자동 생성하고 APK 첨부
+
+릴리스 배포 예시:
+
+- `git tag v1.0.0`
+- `git push origin v1.0.0`
+
+위 명령 실행 후 GitHub의 Actions/Release 탭에서 결과를 확인할 수 있습니다.
+
 ## 정확도 개선 팁
 
 - 배경은 최대한 균일하고 밝게 유지
