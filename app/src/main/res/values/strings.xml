@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MNIST Camera Classifier</string>
+    <string name="result_default">Prediction: -</string>
+    <string name="confidence_default">Confidence: -</string>
+    <string name="capture_button">Capture and Classify</string>
+</resources>
