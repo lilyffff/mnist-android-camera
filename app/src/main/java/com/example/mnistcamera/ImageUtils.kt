@@ -11,18 +11,37 @@ object ImageUtils {
     private const val MNIST_STD = 0.3081f
 
     fun preprocessGuideRoiTo28(bitmap: Bitmap): FloatArray {
-        val resized = Bitmap.createScaledBitmap(bitmap, TARGET_SIZE, TARGET_SIZE, true)
-        val gray = toInvertedGray(resized)
+        val invertedGray = toInvertedGray(bitmap)
+        val width = bitmap.width
+        val height = bitmap.height
+
+        val maxValue = invertedGray.maxOrNull() ?: 0f
+        val threshold = maxOf(0.18f, maxValue * 0.35f)
+
+        val digitBox = findBoundingBoxOrNull(invertedGray, width, height, threshold)
+            ?: return FloatArray(TARGET_SIZE * TARGET_SIZE)
+        val squareBox = makePaddedSquareBox(digitBox, width, height)
+
         val output = FloatArray(TARGET_SIZE * TARGET_SIZE)
-        for (i in gray.indices) {
-            output[i] = (gray[i] - MNIST_MEAN) / MNIST_STD
+        val margin = (TARGET_SIZE - TARGET_DIGIT_SIZE) / 2
+
+        for (y in 0 until TARGET_DIGIT_SIZE) {
+            for (x in 0 until TARGET_DIGIT_SIZE) {
+                val sx = squareBox.left + ((x + 0.5f) / TARGET_DIGIT_SIZE) * squareBox.width - 0.5f
+                val sy = squareBox.top + ((y + 0.5f) / TARGET_DIGIT_SIZE) * squareBox.height - 0.5f
+                val sample = bilinearSample(invertedGray, width, height, sx, sy)
+                val binarized = if (sample >= threshold) 1f else 0f
+
+                val outX = x + margin
+                val outY = y + margin
+                output[outY * TARGET_SIZE + outX] = (binarized - MNIST_MEAN) / MNIST_STD
+            }
         }
         return output
     }
 
     fun estimateInkRatioInGuideRoi(bitmap: Bitmap): Float {
-        val resized = Bitmap.createScaledBitmap(bitmap, TARGET_SIZE, TARGET_SIZE, true)
-        val gray = toInvertedGray(resized)
+        val gray = toInvertedGray(bitmap)
         val maxValue = gray.maxOrNull() ?: 0f
         val threshold = maxOf(0.20f, maxValue * 0.35f)
         val inkPixels = gray.count { it >= threshold }
