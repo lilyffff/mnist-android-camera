@@ -39,6 +39,12 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    packaging {
+        resources {
+            noCompress += setOf("tflite", "lite")
+        }
+    }
 }
 
 dependencies {

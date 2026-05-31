@@ -1,5 +1,8 @@
 name: Android Release
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     tags:
@@ -27,6 +30,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: "8.7"
+          cache-disabled: true
 
       - name: Build installable debug APK
         run: gradle :app:assembleDebug

@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var classifier: DigitClassifier
+    private var classifier: DigitClassifier? = null
     private lateinit var cameraExecutor: ExecutorService
     private var imageCapture: ImageCapture? = null
 
@@ -40,7 +40,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        classifier = DigitClassifier(this)
+        try {
+            classifier = DigitClassifier(this)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Model load failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         binding.captureButton.setOnClickListener {
@@ -87,6 +91,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun captureAndClassify() {
         val capture = imageCapture ?: return
+        val localClassifier = classifier
+        if (localClassifier == null) {
+            runOnUiThread {
+                Toast.makeText(this, "Classifier is not ready.", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
 
         val photoFile = File.createTempFile("mnist_capture_", ".jpg", cacheDir)
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
@@ -115,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                         return
                     }
 
-                    val result = classifier.classify(bitmap)
+                    val result = localClassifier.classify(bitmap)
                     photoFile.delete()
 
                     runOnUiThread {
@@ -133,7 +144,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        classifier.close()
+        classifier?.close()
         cameraExecutor.shutdown()
     }
 }
