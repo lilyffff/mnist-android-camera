@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
-import java.nio.MappedByteBuffer
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 
 data class ClassificationResult(
@@ -39,15 +41,26 @@ class DigitClassifier(context: Context) {
         interpreter.close()
     }
 
-    private fun loadModelFile(context: Context, modelName: String): MappedByteBuffer {
-        context.assets.openFd(modelName).use { fileDescriptor ->
-            FileInputStream(fileDescriptor.fileDescriptor).use { inputStream ->
-                val channel = inputStream.channel
-                return channel.map(
-                    FileChannel.MapMode.READ_ONLY,
-                    fileDescriptor.startOffset,
-                    fileDescriptor.declaredLength
-                )
+    private fun loadModelFile(context: Context, modelName: String): ByteBuffer {
+        try {
+            context.assets.openFd(modelName).use { fileDescriptor ->
+                FileInputStream(fileDescriptor.fileDescriptor).use { inputStream ->
+                    val channel = inputStream.channel
+                    return channel.map(
+                        FileChannel.MapMode.READ_ONLY,
+                        fileDescriptor.startOffset,
+                        fileDescriptor.declaredLength
+                    )
+                }
+            }
+        } catch (_: IOException) {
+            // Fallback for environments where the model asset is compressed.
+            context.assets.open(modelName).use { inputStream ->
+                val modelBytes = inputStream.readBytes()
+                val buffer = ByteBuffer.allocateDirect(modelBytes.size).order(ByteOrder.nativeOrder())
+                buffer.put(modelBytes)
+                buffer.rewind()
+                return buffer
             }
         }
     }
