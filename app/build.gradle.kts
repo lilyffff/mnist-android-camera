@@ -40,10 +40,9 @@ android {
         viewBinding = true
     }
 
-    packaging {
-        resources {
-            noCompress += setOf("tflite", "lite")
-        }
+    androidResources {
+        noCompress += "tflite"
+        noCompress += "lite"
     }
 }
 
